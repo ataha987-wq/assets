@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>لوحة الإدارة - تقارير حالة المعدات والأصول</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#0f2942; --navy-2:#163a5c; --gold:#c8952c; --bg:#f4f6f9; --card:#fff;
+    --text:#1c2b3a; --muted:#6b7c8e; --border:#e1e6ec; --danger:#c0392b; --ok:#1e8e5a;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:'Cairo',sans-serif;background:var(--bg);color:var(--text);}
+  header{background:linear-gradient(135deg,var(--navy),var(--navy-2));color:#fff;padding:14px 20px;border-bottom:4px solid var(--gold);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;}
+  .header-brand{display:flex;align-items:center;gap:12px;}
+  .header-brand img{width:44px;height:44px;border-radius:10px;background:#fff;padding:3px;}
+  header h1{margin:0;font-size:17px;}
+  header .sub{font-size:12px;color:#cdd9e6;}
+  main{max-width:1200px;margin:0 auto;padding:20px 16px 20px;}
+  .app-footer{text-align:center;padding:14px 10px 30px;}
+  .app-footer p{margin:0;font-size:12px;color:var(--muted);}
+
+  .login-box{max-width:380px;margin:60px auto;background:var(--card);padding:28px;border-radius:14px;box-shadow:0 6px 20px rgba(15,41,66,.1);text-align:center;}
+  .login-box h2{color:var(--navy);margin-top:0;}
+  .login-box input{width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:10px;font-family:'Cairo',sans-serif;font-size:15px;margin-bottom:14px;}
+  .login-box button, .toolbar button{background:var(--navy);color:#fff;border:none;border-radius:10px;padding:12px 18px;font-family:'Cairo',sans-serif;font-weight:700;cursor:pointer;font-size:14px;}
+  .login-box .err{color:var(--danger);font-size:13px;margin-bottom:10px;min-height:16px;}
+
+  .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px;}
+  .toolbar input, .toolbar select{padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-family:'Cairo',sans-serif;font-size:13px;background:#fff;}
+  .toolbar .spacer{flex:1;}
+  .stat{background:#fff;border:1.5px solid var(--border);border-radius:10px;padding:8px 14px;font-size:13px;color:var(--muted);}
+  .stat b{color:var(--navy);font-size:15px;}
+
+  table{width:100%;border-collapse:collapse;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 3px 12px rgba(15,41,66,.06);}
+  th, td{padding:10px 12px;font-size:13px;text-align:right;border-bottom:1px solid var(--border);vertical-align:top;}
+  th{background:var(--navy);color:#fff;position:sticky;top:0;}
+  tr:hover td{background:#f7fafc;}
+  .badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11.5px;font-weight:700;}
+  .b1{background:#e8f0fe;color:#1a56c4;}
+  .b2{background:#fff4e0;color:#a5690c;}
+  .b3{background:#fdecea;color:#b3261e;}
+  .b4{background:#fdecea;color:#7a1e17;}
+  .photos-cell{display:flex;gap:5px;flex-wrap:wrap;max-width:220px;}
+  .photos-cell img{width:44px;height:44px;object-fit:cover;border-radius:6px;cursor:pointer;border:1px solid var(--border);}
+  .empty{text-align:center;padding:50px 10px;color:var(--muted);}
+  .loading{text-align:center;padding:50px 10px;color:var(--muted);}
+  .lightbox{position:fixed;inset:0;background:rgba(10,20,30,.88);display:none;align-items:center;justify-content:center;z-index:100;padding:20px;}
+  .lightbox img{max-width:92%;max-height:92%;border-radius:10px;}
+  .lightbox.show{display:flex;}
+  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ok);color:#fff;padding:12px 20px;border-radius:10px;font-size:14px;opacity:0;transition:opacity .25s;z-index:50;}
+  .toast.error{background:var(--danger);}
+  .toast.show{opacity:1;}
+  @media (max-width:720px){
+    table, thead, tbody, tr, th, td{display:block;}
+    thead{display:none;}
+    tr{background:#fff;margin-bottom:12px;border-radius:10px;box-shadow:0 2px 8px rgba(15,41,66,.08);padding:8px 0;}
+    td{border:none;display:flex;justify-content:space-between;gap:10px;}
+    td::before{content:attr(data-label);font-weight:700;color:var(--navy);flex-shrink:0;}
+  }
+</style>
+</head>
+<body>
+
+<div id="loginView">
+  <header>
+    <div class="header-brand">
+      <img src="icons/logo.png" alt="شعار شركة شموع الماضي">
+      <div><h1>شركة شموع الماضي</h1><div class="sub">لوحة إدارة تقارير حالة المعدات والأصول</div></div>
+    </div>
+  </header>
+  <div class="login-box">
+    <h2>دخول الإدارة</h2>
+    <div class="err" id="loginErr"></div>
+    <input type="text" id="adminUsername" placeholder="اسم المستخدم" value="admin">
+    <input type="password" id="adminPassword" placeholder="كلمة المرور">
+    <button onclick="login()" style="width:100%;">دخول</button>
+  </div>
+  <div class="app-footer"><p>تصميم أحمد طه — مكتب نائب الرئيس التنفيذي</p></div>
+</div>
+
+<div id="dashboardView" style="display:none;">
+  <header>
+    <div class="header-brand">
+      <img src="icons/logo.png" alt="شعار شركة شموع الماضي">
+      <div><h1>شركة شموع الماضي</h1><div class="sub">لوحة إدارة تقارير حالة المعدات والأصول</div></div>
+    </div>
+    <button onclick="exportExcel()" id="exportBtn" style="background:var(--gold);">⬇ تصدير Excel</button>
+  </header>
+  <main>
+    <div class="toolbar">
+      <input type="text" id="searchBox" placeholder="بحث بالاسم / الموقع / المعدة..." style="min-width:220px;" oninput="renderTable()">
+      <select id="statusFilter" onchange="renderTable()">
+        <option value="">كل الحالات</option>
+        <option value="صالحة ويستخدمها الموقع بصورة غير منتظمة">صالحة - استخدام غير منتظم</option>
+        <option value="صالحة والموقع ليس في حاجة إليها">صالحة - غير محتاجة</option>
+        <option value="تحتاج صيانة ويُعاد استخدامها بالموقع">تحتاج صيانة</option>
+        <option value="غير صالحة للاستخدام">غير صالحة</option>
+      </select>
+      <div class="spacer"></div>
+      <div class="stat">عدد التسجيلات: <b id="countStat">0</b></div>
+      <button onclick="loadData()" style="background:var(--navy-2);">تحديث ⟳</button>
+    </div>
+    <div id="tableWrap"><div class="loading">جارِ تحميل البيانات...</div></div>
+  </main>
+  <div class="app-footer"><p>تصميم أحمد طه — مكتب نائب الرئيس التنفيذي</p></div>
+</div>
+
+<div class="lightbox" id="lightbox" onclick="this.classList.remove('show')"><img id="lightboxImg" src=""></div>
+<div class="toast" id="toast"></div>
+
+<script src="config.js"></script>
+<script>
+let ADMIN_PASSWORD_INPUT = '';
+let allRows = [];
+
+function showToast(msg, isError){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (isError ? ' error' : '');
+  setTimeout(function(){ t.className = 'toast'; }, 3500);
+}
+
+function login(){
+  const user = document.getElementById('adminUsername').value.trim();
+  const pw = document.getElementById('adminPassword').value;
+  if(user !== 'admin'){ document.getElementById('loginErr').textContent = 'اسم المستخدم غير صحيح'; return; }
+  if(!pw){ document.getElementById('loginErr').textContent = 'اكتب كلمة المرور'; return; }
+  ADMIN_PASSWORD_INPUT = pw;
+  document.getElementById('loginErr').textContent = '';
+  loadData(true);
+}
+
+async function loadData(isLogin){
+  if(!APPS_SCRIPT_URL || APPS_SCRIPT_URL.indexOf('PUT_YOUR') === 0){
+    showToast('لسه لازم تحط رابط الـ Apps Script في ملف config.js', true);
+    return;
+  }
+  try{
+    const res = await fetch(APPS_SCRIPT_URL + '?action=list&password=' + encodeURIComponent(ADMIN_PASSWORD_INPUT));
+    const data = await res.json();
+    if(!data.ok){
+      if(isLogin){ document.getElementById('loginErr').textContent = data.error || 'كلمة مرور غير صحيحة'; }
+      else { showToast(data.error || 'حصل خطأ', true); }
+      return;
+    }
+    allRows = data.rows.reverse();
+    document.getElementById('loginView').style.display = 'none';
+    document.getElementById('dashboardView').style.display = 'block';
+    renderTable();
+  } catch(err){
+    if(isLogin) document.getElementById('loginErr').textContent = 'تعذر الاتصال بالسيرفر';
+    else showToast('تعذر الاتصال بالسيرفر', true);
+  }
+}
+
+function statusBadgeClass(status){
+  if(status.indexOf('غير صالحة') === 0) return 'b4';
+  if(status.indexOf('تحتاج صيانة') === 0) return 'b3';
+  if(status.indexOf('ليس في حاجة') > -1) return 'b2';
+  return 'b1';
+}
+
+function renderTable(){
+  const search = document.getElementById('searchBox').value.trim().toLowerCase();
+  const statusFilter = document.getElementById('statusFilter').value;
+
+  const rows = allRows.filter(function(r){
+    const matchesSearch = !search || (r.employeeName + r.siteName + r.assetName).toLowerCase().indexOf(search) > -1;
+    const matchesStatus = !statusFilter || r.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
+
+  document.getElementById('countStat').textContent = rows.length;
+  const wrap = document.getElementById('tableWrap');
+
+  if(rows.length === 0){
+    wrap.innerHTML = '<div class="empty">مفيش تسجيلات مطابقة</div>';
+    return;
+  }
+
+  let html = '<table><thead><tr>' +
+    '<th>التاريخ</th><th>الموظف</th><th>الموقع</th><th>المعدة/الأصل</th><th>الحالة</th><th>ملاحظات</th><th>الصور</th>' +
+    '</tr></thead><tbody>';
+
+  rows.forEach(function(r){
+    const dt = new Date(r.timestamp);
+    const dtStr = isNaN(dt) ? r.timestamp : dt.toLocaleString('ar-EG', {dateStyle:'medium', timeStyle:'short'});
+    let photosHtml = '';
+    r.photoUrls.forEach(function(url){
+      const previewUrl = url.replace('/view?usp=drivesdk','').replace(/\/view.*$/, '');
+      const imgId = (url.match(/[-\w]{25,}/) || [])[0];
+      const thumb = imgId ? 'https://drive.google.com/thumbnail?id=' + imgId + '&sz=w200' : url;
+      photosHtml += '<img src="' + thumb + '" onclick="openLightbox(\'' + thumb.replace(/'/g,"") + '\')" loading="lazy">';
+    });
+    html += '<tr>' +
+      '<td data-label="التاريخ">' + dtStr + '</td>' +
+      '<td data-label="الموظف">' + escapeHtml(r.employeeName) + '</td>' +
+      '<td data-label="الموقع">' + escapeHtml(r.siteName) + '</td>' +
+      '<td data-label="المعدة/الأصل">' + escapeHtml(r.assetName) + '</td>' +
+      '<td data-label="الحالة"><span class="badge ' + statusBadgeClass(r.status) + '">' + escapeHtml(r.status) + '</span></td>' +
+      '<td data-label="ملاحظات">' + (escapeHtml(r.notes) || '—') + '</td>' +
+      '<td data-label="الصور"><div class="photos-cell">' + (photosHtml || '—') + '</div></td>' +
+      '</tr>';
+  });
+
+  html += '</tbody></table>';
+  wrap.innerHTML = html;
+}
+
+function escapeHtml(str){
+  const d = document.createElement('div');
+  d.textContent = str || '';
+  return d.innerHTML;
+}
+
+function openLightbox(url){
+  document.getElementById('lightboxImg').src = url;
+  document.getElementById('lightbox').classList.add('show');
+}
+
+async function exportExcel(){
+  const btn = document.getElementById('exportBtn');
+  const originalText = btn.textContent;
+  btn.textContent = 'جارِ التحضير...';
+  btn.disabled = true;
+  try{
+    const res = await fetch(APPS_SCRIPT_URL + '?action=export&password=' + encodeURIComponent(ADMIN_PASSWORD_INPUT));
+    const data = await res.json();
+    if(data.ok){
+      window.open(data.url, '_blank');
+      showToast('تم إنشاء ملف الإكسل، هيبدأ التحميل في تاب جديد');
+    } else {
+      showToast(data.error || 'حصل خطأ أثناء التصدير', true);
+    }
+  } catch(err){
+    showToast('تعذر الاتصال بالسيرفر', true);
+  } finally {
+    btn.textContent = originalText;
+    btn.disabled = false;
+  }
+}
+
+document.getElementById('adminPassword').addEventListener('keydown', function(e){
+  if(e.key === 'Enter') login();
+});
+</script>
+</body>
+</html>
